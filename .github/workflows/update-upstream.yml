@@ -1,0 +1,105 @@
+name: Update upstream release
+
+on:
+  schedule:
+    # Daily at 03:17 UTC; releases are infrequent, this only opens a PR.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-upstream
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.repository == 'anise0x7c/dsh-desktop-linux-copr'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Look for a newer upstream release
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 scripts/update-release.py --log | tee /tmp/result.json
+
+      - name: Detect manifest changes
+        id: changes
+        run: |
+          if git diff --quiet -- packaging/release.json deepseek-harness.spec; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat
+          fi
+
+      - name: Commit and push the update branch
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          set -eu
+          tag=$(python3 -c 'import json; print(json.load(open("/tmp/result.json"))["tag"])')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B automation/upstream-release
+          git add packaging/release.json deepseek-harness.spec
+          git commit -m "Update to upstream ${tag}"
+          git push --force origin automation/upstream-release
+
+      - name: Open or update the pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          python3 - <<'PY'
+          import json
+          import pathlib
+
+          result = json.load(open("/tmp/result.json"))
+          body = f"""Automated update to upstream `{result['tag']}`.
+
+          * Version: `{result['version']}`
+          * Downstream release: `{result['release']}`
+          * Commit: `{result['commit']}`
+          * Release page: {result.get('url') or '(not reported)'}
+
+          The manifest and the generated spec were updated by
+          `scripts/update-release.py`. CI builds the SRPM and all four Fedora
+          targets before this PR can be merged.
+
+          Before merging:
+
+          - [ ] Re-audit the license expression and the runtime dependency list
+                (the tool carries them over from the previous release and adds a
+                note to `packaging/release.json`).
+          - [ ] Confirm the upstream release notes contain no packaging-relevant
+                change (new bundled runtimes, sandbox changes, new file paths).
+
+          Merging this PR triggers COPR through its GitHub webhook.
+          """
+          pathlib.Path("/tmp/pr-body.md").write_text(body, encoding="utf-8")
+          title = f"Update to upstream {result['tag']}"
+          pathlib.Path("/tmp/pr-title.txt").write_text(title, encoding="utf-8")
+          PY
+          title=$(cat /tmp/pr-title.txt)
+          if gh pr view automation/upstream-release --json number >/dev/null 2>&1; then
+            gh pr edit automation/upstream-release --title "$title" --body-file /tmp/pr-body.md
+          else
+            gh pr create --base main --head automation/upstream-release \
+              --title "$title" --body-file /tmp/pr-body.md
+          fi

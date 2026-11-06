@@ -1,0 +1,132 @@
+name: Packaging
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: packaging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Manifest, spec and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Committed spec matches the manifest
+        run: python3 scripts/make-spec.py --check
+
+  build:
+    name: Fedora ${{ matrix.fedora }} ${{ matrix.arch }}
+    needs: checks
+    runs-on: ${{ matrix.runner }}
+    container: fedora:${{ matrix.fedora }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - fedora: 44
+            arch: x86_64
+            runner: ubuntu-latest
+          - fedora: 44
+            arch: aarch64
+            runner: ubuntu-24.04-arm
+          - fedora: 45
+            arch: x86_64
+            runner: ubuntu-latest
+          - fedora: 45
+            arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: dnf -y install make rpm-build cpio desktop-file-utils rpmlint python3
+
+      - name: Build the source RPM (same command COPR uses)
+        run: make -f .copr/Makefile srpm outdir=/tmp/srpm spec="$PWD/deepseek-harness.spec"
+
+      - name: Check the source RPM
+        run: |
+          set -eu
+          srpm=$(find /tmp/srpm -name '*.src.rpm' -print -quit)
+          test -n "$srpm"
+          rpm -qp --qf 'SRPM: %{NAME} %{VERSION} %{RELEASE} %{ARCH}\n' "$srpm"
+          rpm -qp --requires "$srpm" | sort
+
+      - name: Rebuild the binary RPM offline
+        run: |
+          set -eu
+          mkdir -p /tmp/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS,tmp}
+          rpmbuild --rebuild \
+            --define "_topdir /tmp/rpmbuild" \
+            --define "_tmppath /tmp/rpmbuild/tmp" \
+            /tmp/srpm/*.src.rpm
+          rpm_path=$(find /tmp/rpmbuild/RPMS -name '*.rpm' -print -quit)
+          test -n "$rpm_path"
+          echo "RPM_PATH=$rpm_path" >> "$GITHUB_ENV"
+
+      - name: Check the binary RPM
+        run: |
+          set -eu
+          arch=$(rpm -qp --qf '%{ARCH}' "$RPM_PATH")
+          test "$arch" = "${{ matrix.arch }}"
+          rpm -qp --qf 'RPM: %{NAME} %{VERSION} %{RELEASE} %{ARCH}\n' "$RPM_PATH"
+          rpm -qp --requires "$RPM_PATH" | sort
+          rpm -qlp "$RPM_PATH" | grep -v '^/opt/DeepSeek Harness/' | sort
+          # The package must own nothing outside its private tree and its own
+          # desktop entries; in particular no build-id links.
+          if rpm -qlp "$RPM_PATH" | grep -q '^/usr/lib/\.build-id/'; then
+            echo "error: package owns /usr/lib/.build-id" >&2
+            exit 1
+          fi
+
+      - name: rpmlint (allowed findings are listed in the repository)
+        run: |
+          set -eu
+          rpmlint "$RPM_PATH" > /tmp/rpmlint.txt || true
+          cat /tmp/rpmlint.txt
+          python3 scripts/check-rpmlint.py /tmp/rpmlint.txt
+
+      - name: Install, verify and remove
+        run: |
+          set -eu
+          dnf -y install "$RPM_PATH"
+          appdir="/opt/DeepSeek Harness"
+          test -x "$appdir/deepseek-harness"
+          test -x "$appdir/chrome-sandbox"
+          test ! -u "$appdir/chrome-sandbox"
+          test "$(stat -c '%a' "$appdir/chrome-sandbox")" = "755"
+          test -L /usr/bin/deepseek-harness
+          test "$(readlink /usr/bin/deepseek-harness)" = "$appdir/deepseek-harness"
+          desktop-file-validate /usr/share/applications/deepseek-harness.desktop
+          test -s /usr/share/icons/hicolor/scalable/apps/deepseek-harness.svg
+          if ldd "$appdir/deepseek-harness" | grep -q 'not found'; then
+            echo "error: unresolved shared libraries:" >&2
+            ldd "$appdir/deepseek-harness" | grep 'not found' >&2
+            exit 1
+          fi
+          rpm -V deepseek-harness
+          dnf -y remove deepseek-harness
+          test ! -e /usr/bin/deepseek-harness
+          test ! -e "$appdir/deepseek-harness"
+
+      - name: Keep the built RPM for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-fedora-${{ matrix.fedora }}-${{ matrix.arch }}
+          path: /tmp/rpmbuild/RPMS/**/*.rpm
+          retention-days: 7
+          if-no-files-found: warn

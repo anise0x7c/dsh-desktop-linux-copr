@@ -1,0 +1,83 @@
+# rpmlint checks that are expected for this repack of a prebuilt Electron
+# application and are therefore not treated as errors by CI.
+#
+# The package is a self-contained /opt tree with its own Node.js, Python,
+# Chromium and native modules.  Fedora's shared-library, stripping, shebang and
+# FHS policies cannot be applied to those upstream binaries without breaking
+# the application, and the upstream payload must stay byte-identical.
+#
+# One check name per line.  Remove an entry when it stops firing; CI prints a
+# note for entries that never fire.
+
+# The application deliberately lives in /opt, not under /usr.
+dir-or-file-in-opt
+
+# The bundled runtime contains duplicate files (license copies, hardlink-safe
+# duplicates created by the upstream packager).
+files-duplicate
+files-duplicated-waste
+
+# Bundled Python/Node runtimes ship headers and static libraries.
+devel-file-in-non-devel-package
+static-library-without-debuginfo
+
+# The bundled Python runtime ships .pyc files with upstream mtimes.
+python-bytecode-inconsistent-mtime
+
+# Scripts inside the payload use /usr/bin/env or unusual interpreters.
+env-script-interpreter
+bin-sh-syntax-error
+non-executable-script
+script-without-shebang
+wrong-script-interpreter
+wrong-script-end-of-line-encoding
+
+# Upstream binaries are already stripped by their vendor, or intentionally
+# left untouched by __os_install_post.
+unstripped-binary-or-object
+
+# Chromium/Electron and the bundled native modules use $ORIGIN rpaths so they
+# keep loading their private copies of libraries.
+binary-or-shlib-defines-rpath
+
+# Paths such as .local or .cache exist inside the bundled runtimes.
+hidden-file-or-dir
+
+# Empty marker files are part of the bundled runtimes.
+zero-length
+
+# Explicit Requires replace automatic dependency generation on purpose; the
+# private sonames must not enter the distribution dependency graph.
+explicit-lib-dependency
+
+# The bundled runtimes call gethostbyname and OpenSSL directly.  They are not
+# linked against the distribution's crypto policy.
+binary-or-shlib-calls-gethostbyname
+crypto-policy-non-compliance-openssl
+
+# Native modules and the bundled Python are not built with Fedora's hardening
+# defaults; this is upstream's build.
+position-independent-executable-suggested
+statically-linked-binary
+no-soname
+shared-library-not-executable
+missing-call-to-setgroups-before-setuid
+
+# Upstream does not ship a man page or a doc directory.
+no-manual-page-for-binary
+no-documentation
+
+# The desktop file starts a binary in /opt whose path contains spaces; rpmlint
+# cannot resolve it.
+desktopfile-without-binary
+
+# %posttrans runs update-alternatives/ln to restore the launcher removed by the
+# previous package's %postun; this is the intended upgrade fix.
+dangerous-command-in-%posttrans
+
+# rpmlint's Fedora configuration in the test environment ships an empty
+# ValidLicenses list and flags every SPDX token, including MIT.
+invalid-license
+
+# Upstream typos/strings inside the bundled runtime.
+spelling-error
