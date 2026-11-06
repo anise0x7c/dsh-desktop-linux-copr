@@ -81,3 +81,8 @@ invalid-license
 
 # Upstream typos/strings inside the bundled runtime.
 spelling-error
+
+# checkbashisms heuristics flag upstream's own helper scripts (xdg-open,
+# pydoc3, cgi.py, install-sh) that ship inside the Electron/Python runtime.
+# We do not modify them; they are not invoked by our scriptlets.
+potential-bashisms
