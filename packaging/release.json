@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "upstream": {
+    "repository": "ffyfox/dsh-desktop-linux",
+    "tag": "v0.2.2rc1",
+    "commit": "731e397fa7d81e883642ab74aac76f352b47f9e2",
+    "release_id": 434188091,
+    "published_at": "2026-11-04T17:05:02Z",
+    "header_license": "MIT"
+  },
+  "package": {
+    "name": "deepseek-harness",
+    "version": "0.2.2~rc.1",
+    "release": 2,
+    "summary": "DeepSeek Harness desktop application",
+    "license": "MIT AND BSD-2-Clause AND BSD-3-Clause AND Apache-2.0 AND ISC AND MPL-2.0 AND LGPL-2.1-or-later AND LGPL-3.0-or-later AND GPL-2.0-or-later AND IJG AND OpenSSL AND Python-2.0 AND PSF-2.0 AND MIT-CMU AND 0BSD AND BlueOak-1.0.0 AND Unlicense AND CC0-1.0 AND OFL-1.1 AND Unicode-3.0 AND (MPL-1.1 OR GPL-2.0-only OR LGPL-2.0-only)",
+    "requires": [
+      "glibc",
+      "libgcc",
+      "at-spi2-core",
+      "alsa-lib",
+      "cairo",
+      "cups-libs",
+      "dbus-libs",
+      "expat",
+      "glib2",
+      "gtk3",
+      "libX11",
+      "libXcomposite",
+      "libXdamage",
+      "libXext",
+      "libXfixes",
+      "libXrandr",
+      "libXScrnSaver",
+      "libXtst",
+      "libffi",
+      "libnotify",
+      "libuuid",
+      "libxcb",
+      "libxkbcommon",
+      "mesa-libgbm",
+      "nspr",
+      "nss",
+      "pango",
+      "pcre2",
+      "systemd-libs",
+      "xdg-utils",
+      "zlib-ng-compat"
+    ]
+  },
+  "assets": {
+    "x86_64": {
+      "id": 710195812,
+      "name": "deepseek-harness-0.2.2-rc.1-linux-x86_64-unsigned.rpm",
+      "url": "https://github.com/ffyfox/dsh-desktop-linux/releases/download/v0.2.2rc1/deepseek-harness-0.2.2-rc.1-linux-x86_64-unsigned.rpm",
+      "size": 242295837,
+      "sha256": "14c4290a950221e72cc78b36f7eb0cf90e97904d89a843ea37f949dde826c1d5",
+      "rpm_release": "1"
+    },
+    "aarch64": {
+      "id": 710194980,
+      "name": "deepseek-harness-0.2.2-rc.1-linux-aarch64-unsigned.rpm",
+      "url": "https://github.com/ffyfox/dsh-desktop-linux/releases/download/v0.2.2rc1/deepseek-harness-0.2.2-rc.1-linux-aarch64-unsigned.rpm",
+      "size": 228533097,
+      "sha256": "ee946d2a0b038a6ae15512a9ca75eac4a1b41ce14bea27d533fdef7327367d19",
+      "rpm_release": "1"
+    }
+  },
+  "audit": {
+    "audited_at": "2026-11-06",
+    "license_sources": [
+      "RPM header of both upstream assets (MIT)",
+      "resources/app/package.json and 654 bundled package.json license fields",
+      "144 Python distribution METADATA records in the bundled CPython runtime",
+      "LICENSES.chromium.html shipped by Electron/Chromium",
+      "OFL-1.1 fonts: Montserrat (dsh-client-ui-theme) and KaTeX web fonts",
+      "Fedora chromium.spec license expression used as the vetted base for the Chromium bundle"
+    ],
+    "notes": [
+      "The package is an aggregate of many bundled works; the License field is the union of the audited components.",
+      "The upstream RPM header only claims MIT, which is not sufficient for the bundled Chromium/Electron/runtime payload.",
+      "Chromium's notice file also mentions Artistic and other one-off texts; the expression follows Fedora's chromium expression and the bundled package metadata."
+    ]
+  }
+}
