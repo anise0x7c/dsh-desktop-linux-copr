@@ -58,17 +58,26 @@ there is no compile step, so failures are limited to packaging mistakes.
 
 ## 3. Enable automatic rebuilds from GitHub
 
-1. In the COPR package settings, enable **Auto-rebuild**.
-2. Copy the package's GitHub webhook URL (COPR shows it under the package's
-   webhook settings; it contains a secret path, so it is not stored in this
-   repository).
+1. Enable **Auto-rebuild** for the `deepseek-harness` package
+   (Packages → `deepseek-harness` → Edit → Auto-rebuild).
+2. Open the project's **Settings → Integrations** page and copy the GitHub
+   webhook URL. It has the form
+
+   ```text
+   https://copr.fedorainfracloud.org/webhooks/github/269868/<UUID>/
+   ```
+
+   `269868` is this project's id; `<UUID>` is generated per project and is
+   visible only in the COPR UI. Treat it as a secret and do not commit it.
+   Use the URL exactly as shown by COPR rather than reconstructing it.
 3. On GitHub, repository **Settings → Webhooks → Add webhook**:
    * Payload URL: the COPR URL from the previous step
    * Content type: `application/json`
    * Secret: *(leave empty unless COPR asks for one)*
-   * Events: **Just the push event**
+   * Events: **Just the push event** (add **Branch or tag creation** only if
+     you later switch to tag-triggered builds)
 4. Push a trivial commit to `main` (or use "Redeliver" on the webhook) and
-   confirm COPR queues a build.
+   confirm COPR queues a build for `deepseek-harness`.
 
 The update workflow only pushes to `automation/upstream-release`; the webhook
 therefore only fires after a human merges the update PR into `main`.
