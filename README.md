@@ -1,13 +1,13 @@
 # dsh-desktop-linux-copr
 
-Fedora packages for [DeepSeek Harness Desktop](https://github.com/ffyfox/dsh-desktop-linux),
+English | [简体中文](README.zh_CN.md)
+
+Fedora packages for [dsh-desktop-linux](https://github.com/ffyfox/dsh-desktop-linux),
 built in COPR from the prebuilt RPMs the upstream project publishes.
 
 This repository is **a repack, not a source build**. The upstream project builds
 an Electron application with bundled Node.js and Python runtimes and ships
-unsigned RPMs for `x86_64` and `aarch64`. This repository verifies those RPMs,
-installs Fedora-appropriate metadata around them, and produces one source RPM
-that builds on Fedora 44 and 45 for both architectures.
+unsigned RPMs for `x86_64` and `aarch64`. This repository verifies those RPMs and installs Fedora-appropriate metadata around them.
 
 * COPR project: `anise0x7c/DeepSeekHarnessDesktop`
 * Package name: `deepseek-harness` (same as upstream)
@@ -96,5 +96,4 @@ Merging the PR triggers COPR through its native GitHub webhook.
   the GitHub release API, not by a signature.
 * The aarch64 package is built and smoke-tested in CI, but the GUI has not been
   exercised on aarch64 hardware here.
-* This is a COPR/WIP package, not part of Fedora. The license expression is an
-  honest aggregate, not a legal review.
+* This is a COPR/WIP package, not part of Fedora.
