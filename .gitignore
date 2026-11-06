@@ -1,0 +1,6 @@
+# Local build products and caches (never committed)
+.work/
+dist/
+*.src.rpm
+__pycache__/
+*.pyc
