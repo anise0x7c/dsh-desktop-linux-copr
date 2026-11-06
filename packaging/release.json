@@ -31,8 +31,6 @@
       "libXext",
       "libXfixes",
       "libXrandr",
-      "libXScrnSaver",
-      "libXtst",
       "libffi",
       "libnotify",
       "libuuid",

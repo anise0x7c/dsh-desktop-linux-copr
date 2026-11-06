@@ -44,8 +44,6 @@ Requires:       libXdamage
 Requires:       libXext
 Requires:       libXfixes
 Requires:       libXrandr
-Requires:       libXScrnSaver
-Requires:       libXtst
 Requires:       libffi
 Requires:       libnotify
 Requires:       libuuid
