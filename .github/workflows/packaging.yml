@@ -96,7 +96,6 @@ jobs:
         run: |
           set -eu
           rpmlint "$RPM_PATH" > /tmp/rpmlint.txt || true
-          cat /tmp/rpmlint.txt
           python3 scripts/check-rpmlint.py /tmp/rpmlint.txt
 
       - name: Install, verify and remove
