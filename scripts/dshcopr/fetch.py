@@ -14,7 +14,7 @@ import time
 import urllib.error
 import urllib.request
 
-__all__ = ["FetchError", "sha256_file", "download"]
+__all__ = ["FetchError", "sha256_file", "verify_file", "download"]
 
 CHUNK = 1024 * 1024
 USER_AGENT = "dsh-desktop-linux-copr (+https://github.com/anise0x7c/dsh-desktop-linux-copr)"
@@ -37,6 +37,33 @@ def sha256_file(path: str | pathlib.Path, chunk: int = CHUNK) -> str:
     return digest.hexdigest()
 
 
+def verify_file(
+    path: str | pathlib.Path,
+    *,
+    expected_size: int,
+    expected_sha256: str,
+) -> pathlib.Path:
+    """Verify an existing file without downloading, changing or removing it."""
+
+    path = pathlib.Path(path)
+    try:
+        actual_size = path.stat().st_size
+        if actual_size != expected_size:
+            raise FetchError(
+                f"{path.name}: size mismatch (got {actual_size} bytes, expected {expected_size})"
+            )
+        actual_sha256 = sha256_file(path)
+    except OSError as exc:
+        raise FetchError(f"{path}: cannot verify file: {exc}") from exc
+
+    if actual_sha256 != expected_sha256:
+        raise FetchError(
+            f"{path.name}: SHA-256 mismatch (got {actual_sha256}, expected {expected_sha256}); "
+            "the cached asset does not match the manifest"
+        )
+    return path
+
+
 def download(
     url: str,
     destination: str | pathlib.Path,
@@ -57,11 +84,16 @@ def download(
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     if destination.exists():
-        if destination.stat().st_size == expected_size and sha256_file(destination) == expected_sha256:
+        try:
+            verify_file(
+                destination, expected_size=expected_size, expected_sha256=expected_sha256
+            )
+        except FetchError:
+            log(f"cache entry does not match the manifest, refetching: {destination.name}")
+            destination.unlink()
+        else:
             log(f"cache hit: {destination.name}")
             return destination
-        log(f"cache entry does not match the manifest, refetching: {destination.name}")
-        destination.unlink()
 
     part = destination.with_name(destination.name + ".part")
     last_error: Exception | None = None

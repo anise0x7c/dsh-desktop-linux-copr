@@ -134,7 +134,15 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             _fail("--skip-download was given but the cache is missing: " + ", ".join(missing))
         for arch in manifest_mod.ARCHES:
-            _verify_metadata(cache / manifest["assets"][arch]["name"], arch, manifest)
+            asset = manifest["assets"][arch]
+            path = cache / asset["name"]
+            try:
+                fetch.verify_file(
+                    path, expected_size=asset["size"], expected_sha256=asset["sha256"]
+                )
+            except fetch.FetchError as exc:
+                _fail(str(exc))
+            _verify_metadata(path, arch, manifest)
     else:
         _download(manifest, cache)
 
