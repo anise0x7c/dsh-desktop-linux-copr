@@ -3,7 +3,20 @@ name: Packaging
 on:
   push:
     branches: [main]
+    # Documentation-only changes cannot affect the package, so skip the four
+    # Fedora builds.  COPR's webhook has no equivalent filter and still
+    # rebuilds on every push to main.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE*'
+      - '.gitignore'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE*'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:

@@ -31,6 +31,10 @@ unsigned RPMs for `x86_64` and `aarch64`. This repository verifies those RPMs an
 Never edit `deepseek-harness.spec` by hand: change the manifest (or the template)
 and run `python3 scripts/make-spec.py`. CI rejects a stale spec.
 
+Documentation-only pushes (`**/*.md`, `docs/`) skip the `Packaging` workflow via
+`paths-ignore`; COPR's auto-rebuild has no such filter and still rebuilds every
+chroot on each push to `main`.
+
 ## Local workflow
 
 ```console
@@ -96,4 +100,4 @@ Merging the PR triggers COPR through its native GitHub webhook.
   the GitHub release API, not by a signature.
 * The aarch64 package is built and smoke-tested in CI, but the GUI has not been
   exercised on aarch64 hardware here.
-* This is a COPR/WIP package, not part of Fedora.
+* This is a COPR package, not part of Fedora.

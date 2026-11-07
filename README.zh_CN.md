@@ -31,6 +31,10 @@ RPM。本仓库负责校验这些 RPM，并为它们补上适合 Fedora 的元�
 不要手工编辑 `deepseek-harness.spec`：请修改清单（或模板），然后运行
 `python3 scripts/make-spec.py`。CI 会拒绝过期的 spec。
 
+只改文档的推送（`**/*.md`、`docs/`）会通过 `paths-ignore` 跳过 `Packaging`
+工作流；但 COPR 的自动重建没有这类过滤，每次 push 到 `main` 都会重建全部
+chroot。
+
 ## 本地流程
 
 ```console
@@ -90,4 +94,4 @@ digest、RPM 头匹配且 release 为数字。任何它无法理解的情况都�
   不是通过签名。
 * aarch64 包会在 CI 中构建并做冒烟测试，但尚未在此处的 aarch64 硬件上实际运行
   GUI。
-* 这是 COPR/WIP 包，不属于 Fedora。
+* 这是 COPR 包，不属于 Fedora。

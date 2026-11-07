@@ -82,6 +82,15 @@ there is no compile step, so failures are limited to packaging mistakes.
 The update workflow only pushes to `automation/upstream-release`; the webhook
 therefore only fires after a human merges the update PR into `main`.
 
+Auto-rebuild has no path filter: every push to `main` queues a rebuild of all
+enabled chroots, including documentation-only commits. The `Packaging` GitHub
+Actions workflow skips those commits via `paths-ignore`, but COPR does not. If
+that cost matters, batch documentation changes with real packaging changes, or
+leave Auto-rebuild off and start builds by hand. If `Packaging` ever becomes a
+required status check, a documentation-only pull request will not report it and
+will stay pending; dispatch the workflow manually or add an always-running
+companion check before enabling branch protection.
+
 ## 4. User-side verification
 
 ```console
