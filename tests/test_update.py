@@ -77,6 +77,134 @@ class FindCandidateTest(unittest.TestCase):
         self.assertEqual(candidate.tag, "v1.0.0")
         self.assertEqual(candidate.version, "1.0.0")
 
+    def test_incomplete_current_and_new_release_cannot_mean_no_update(self):
+        releases = [
+            complete_release("v0.1.0", version="0.1.0"),
+            release("v0.2.2rc1", [asset("x86_64", tag="v0.2.2rc1")]),
+            release("v0.3.0", [asset("x86_64")]),
+        ]
+        with self.assertRaises(update.UpdateError):
+            update.find_candidate(releases, self.current)
+
+    def test_rejected_current_release_is_checked_without_new_candidate(self):
+        for defect in ("missing-arch", "missing-digest"):
+            with self.subTest(defect=defect):
+                assets = [asset("x86_64", tag="v0.2.2rc1")]
+                if defect == "missing-digest":
+                    assets.append(asset("aarch64", tag="v0.2.2rc1", digest=None))
+                current = release("v0.2.2rc1", assets, published_at=None)
+                with self.assertRaises(update.UpdateError):
+                    update.find_candidate(
+                        [complete_release("v0.1.0", version="0.1.0"), current],
+                        self.current,
+                    )
+
+    def test_higher_rejected_version_blocks_later_published_candidate(self):
+        incomplete = release(
+            "v0.4.0", [asset("x86_64", tag="v0.4.0")],
+            published_at="2026-11-05T00:00:00Z",
+        )
+        complete = complete_release("v0.3.0", published_at="2026-11-06T00:00:00Z")
+        with self.assertRaisesRegex(update.UpdateError, "v0.4.0"):
+            update.find_candidate([incomplete, complete], "0.2.0")
+
+    def test_known_older_rejected_version_is_not_blocking_even_if_published_later(self):
+        incomplete = release(
+            "v0.2.0", [asset("x86_64", tag="v0.2.0")],
+            published_at="2026-11-07T00:00:00Z",
+        )
+        for tag, version in (("v0.1.0", "0.1.0"), ("v0.3.0", "0.3.0")):
+            with self.subTest(complete=tag):
+                candidate = update.find_candidate(
+                    [incomplete, complete_release(tag, version=version)], self.current
+                )
+                if version == "0.1.0":
+                    self.assertIsNone(candidate)
+                else:
+                    self.assertEqual(candidate.tag, tag)
+
+    def test_rejected_version_below_best_candidate_can_be_skipped(self):
+        incomplete = release(
+            "v0.3.0", [asset("x86_64")], published_at="2026-11-07T00:00:00Z"
+        )
+        candidate = update.find_candidate(
+            [incomplete, complete_release("v0.4.0", version="0.4.0")], self.current
+        )
+        self.assertEqual(candidate.tag, "v0.4.0")
+
+    def test_higher_rejected_version_without_timestamp_is_blocking(self):
+        incomplete = release("v0.4.0", [asset("x86_64")], published_at=None)
+        with self.assertRaises(update.UpdateError):
+            update.find_candidate([complete_release("v0.3.0"), incomplete], self.current)
+
+    def test_unknown_new_tag_is_checked_without_new_candidate(self):
+        unknown = release("nightly-2026-11-06", [], published_at="2026-11-06T00:00:00Z")
+        with self.assertRaises(update.UpdateError):
+            update.find_candidate(
+                [complete_release("v0.1.0", version="0.1.0"), unknown], self.current
+            )
+
+    def test_unknown_old_tag_can_be_skipped_with_and_without_new_candidate(self):
+        for unknown_tag in ("legacy-release", None):
+            for tag, version in (("v0.1.0", "0.1.0"), ("v0.3.0", "0.3.0")):
+                with self.subTest(unknown_tag=unknown_tag, complete=tag):
+                    unknown = release(unknown_tag, [], published_at="2026-11-01T00:00:00Z")
+                    candidate = update.find_candidate(
+                        [unknown, complete_release(tag, version=version)], self.current
+                    )
+                    if version == "0.1.0":
+                        self.assertIsNone(candidate)
+                    else:
+                        self.assertEqual(candidate.tag, tag)
+
+    def test_unknown_tag_with_unusable_timestamp_fails_closed(self):
+        for timestamp in (None, "", "not-a-date", "2026-11-01"):
+            for tag, version in (("v0.1.0", "0.1.0"), ("v0.3.0", "0.3.0")):
+                with self.subTest(timestamp=timestamp, complete=tag):
+                    unknown = release("nightly", [], published_at=timestamp)
+                    with self.assertRaises(update.UpdateError):
+                        update.find_candidate(
+                            [unknown, complete_release(tag, version=version)], self.current
+                        )
+
+    def test_unknown_tag_without_trustworthy_reference_timestamp_fails_closed(self):
+        for tag, version in (("v0.1.0", "0.1.0"), ("v0.3.0", "0.3.0")):
+            with self.subTest(complete=tag):
+                complete = complete_release(tag, version=version, published_at=None)
+                unknown = release("legacy-release", [], published_at="2026-11-01T00:00:00Z")
+                with self.assertRaises(update.UpdateError):
+                    update.find_candidate([complete, unknown], self.current)
+
+    def test_unknown_tag_uses_created_at_when_publication_time_is_missing(self):
+        unknown = release("nightly", [], published_at=None)
+        unknown["created_at"] = "2026-11-06T00:00:00Z"
+        with self.assertRaises(update.UpdateError):
+            update.find_candidate(
+                [complete_release("v0.1.0", version="0.1.0"), unknown], self.current
+            )
+
+    def test_unknown_tag_timestamp_comparison_uses_actual_instants(self):
+        # This is 05:00 UTC, older than the complete release at 10:00 UTC.
+        unknown = release("legacy-release", [], published_at="2026-11-05T13:00:00+08:00")
+        candidate = update.find_candidate([complete_release("v0.3.0"), unknown], self.current)
+        self.assertEqual(candidate.tag, "v0.3.0")
+
+    def test_rejected_drafts_are_ignored_in_both_candidate_paths(self):
+        for tag, version in (("v0.1.0", "0.1.0"), ("v0.3.0", "0.3.0")):
+            with self.subTest(complete=tag):
+                drafts = [
+                    release("v9.9.9", [], draft=True, published_at=None),
+                    release("nightly", [], draft=True, published_at=None),
+                ]
+                candidate = update.find_candidate(
+                    drafts + [complete_release(tag, version=version)], self.current
+                )
+                if version == "0.1.0":
+                    self.assertIsNone(candidate)
+                else:
+                    self.assertEqual(candidate.tag, tag)
+
+
 class BuildManifestTest(unittest.TestCase):
     def setUp(self):
         self.current = manifest_data()
