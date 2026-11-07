@@ -1,12 +1,15 @@
 import copy
 import pathlib
 import sys
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "tests"))
 
 from dshcopr import manifest, specgen  # noqa: E402
+from support import manifest_data  # noqa: E402
 
 MANIFEST = ROOT / "packaging" / "release.json"
 
@@ -21,8 +24,13 @@ class SpecgenTest(unittest.TestCase):
 
     def test_render_contains_version_requires_and_sources(self):
         text = specgen.render(self.data)
-        self.assertIn("Version:        0.2.2~rc.1", text)
-        self.assertIn("Requires:       gtk3", text)
+        package = self.data["package"]
+        # Derive the expected values from the manifest so an automated update
+        # to a newer upstream release does not fail this test.
+        self.assertIn(f"Version:        {package['version']}", text)
+        self.assertIn(f"Release:        {package['release']}%{{?dist}}", text)
+        for requirement in package["requires"]:
+            self.assertIn(f"Requires:       {requirement}", text)
         self.assertIn(self.data["assets"]["x86_64"]["url"], text)
         self.assertIn(self.data["assets"]["aarch64"]["url"], text)
         self.assertNotIn("@@", text)
@@ -30,11 +38,27 @@ class SpecgenTest(unittest.TestCase):
 
     def test_stale_spec_produces_diff(self):
         data = copy.deepcopy(self.data)
-        data["package"]["release"] = 99
+        committed_release = data["package"]["release"]
+        data["package"]["release"] = committed_release + 1
         diff = specgen.check(data, specgen.SPEC)
         self.assertIsNotNone(diff)
-        self.assertIn("-Release:        2%{?dist}", diff)
-        self.assertIn("+Release:        99%{?dist}", diff)
+        self.assertIn(f"-Release:        {committed_release}%{{?dist}}", diff)
+        self.assertIn(f"+Release:        {committed_release + 1}%{{?dist}}", diff)
+
+    def test_future_manifest_is_not_reported_stale(self):
+        for tag, version, release in (
+            ("v0.3.0", "0.3.0", 3),
+            ("v1.0.0", "1.0.0", 5),
+        ):
+            with self.subTest(tag=tag):
+                data = manifest_data(tag=tag, version=version, release=release)
+                text = specgen.render(data)
+                self.assertIn(f"Version:        {version}", text)
+                self.assertIn(f"Release:        {release}%{{?dist}}", text)
+                with tempfile.TemporaryDirectory() as tmp:
+                    path = pathlib.Path(tmp) / "deepseek-harness.spec"
+                    path.write_text(text, encoding="utf-8")
+                    self.assertIsNone(specgen.check(data, path))
 
     def test_unresolved_placeholder_is_an_error(self):
         with self.assertRaises(specgen.SpecgenError):
