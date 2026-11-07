@@ -131,9 +131,18 @@ fi
 # The installed payload must be byte-for-byte identical to the verified
 # upstream archive (apart from the explicit 0755 chmod above, which does not
 # change file contents).  This catches accidental rewrites by later changes.
-( cd "$workdir" && find "$appdir_path" -type f -print0 | sort -z | xargs -0 sha256sum -- ) \
-    > "%{_builddir}/payload.sha256"
-( cd "%{buildroot}" && sha256sum --check --quiet "%{_builddir}/payload.sha256" )
+# Record relative names so both passes use their staging tree, not /opt on
+# the build host.  Keep pipefail local, and reject an empty checksum list.
+(
+    set -o pipefail || exit 1
+    cd "$workdir" || exit 1
+    find ".$appdir_path" -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum --
+) > "%{_builddir}/payload.sha256" || exit 1
+if [ ! -s "%{_builddir}/payload.sha256" ]; then
+    echo "error: payload contains no regular files to verify" >&2
+    exit 1
+fi
+( cd "%{buildroot}" && sha256sum --check --quiet "%{_builddir}/payload.sha256" ) || exit 1
 list_symlinks() {
     root="$1"
     find "$root" -type l | LC_ALL=C sort | while IFS= read -r link; do
