@@ -9,7 +9,7 @@
 应用，捆绑了 Node.js 与 Python 运行时，并为 `x86_64` 和 `aarch64` 发布未签名的
 RPM。本仓库负责校验这些 RPM，并为它们补上适合 Fedora 的元数据。
 
-* COPR 项目：`anise0x7c/DeepSeekHarnessDesktop`
+* COPR 项目：`anise0x7c/DSHDesktopLinux`
 * 包名：`deepseek-harness`（与上游一致）
 * COPR 构建方式：SCM Git + `make_srpm`
 

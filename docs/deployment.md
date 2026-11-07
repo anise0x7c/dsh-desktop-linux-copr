@@ -1,7 +1,7 @@
 # Deploying to COPR
 
 These steps are written for the existing WIP project
-`anise0x7c/DeepSeekHarnessDesktop` (project id 269868). Nothing here is done by
+`anise0x7c/DSHDesktopLinux` (project id 270178). Nothing here is done by
 this repository automatically.
 
 ## 0. Prerequisites
@@ -64,10 +64,10 @@ there is no compile step, so failures are limited to packaging mistakes.
    webhook URL. It has the form
 
    ```text
-   https://copr.fedorainfracloud.org/webhooks/github/269868/<UUID>/
+   https://copr.fedorainfracloud.org/webhooks/github/270178/<UUID>/
    ```
 
-   `269868` is this project's id; `<UUID>` is generated per project and is
+   `270178` is this project's id; `<UUID>` is generated per project and is
    visible only in the COPR UI. Treat it as a secret and do not commit it.
    Use the URL exactly as shown by COPR rather than reconstructing it.
 3. On GitHub, repository **Settings → Webhooks → Add webhook**:
@@ -94,7 +94,7 @@ companion check before enabling branch protection.
 ## 4. User-side verification
 
 ```console
-$ sudo dnf copr enable anise0x7c/DeepSeekHarnessDesktop
+$ sudo dnf copr enable anise0x7c/DSHDesktopLinux
 $ sudo dnf install deepseek-harness
 $ deepseek-harness
 ```

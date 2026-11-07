@@ -9,7 +9,7 @@ This repository is **a repack, not a source build**. The upstream project builds
 an Electron application with bundled Node.js and Python runtimes and ships
 unsigned RPMs for `x86_64` and `aarch64`. This repository verifies those RPMs and installs Fedora-appropriate metadata around them.
 
-* COPR project: `anise0x7c/DeepSeekHarnessDesktop`
+* COPR project: `anise0x7c/DSHDesktopLinux`
 * Package name: `deepseek-harness` (same as upstream)
 * COPR build method: SCM Git + `make_srpm`
 
