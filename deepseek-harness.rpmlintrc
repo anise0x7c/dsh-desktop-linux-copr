@@ -1,0 +1,20 @@
+# rpmlint filters for the repackaged Electron payload.
+#
+# The generic exceptions live in packaging/rpmlint-exceptions.txt, which is
+# consulted by scripts/check-rpmlint.py.  Filters here are used for findings
+# that are scoped to a particular file, so they cannot be expressed as a
+# package-wide check name.
+#
+# CI invokes: rpmlint -r deepseek-harness.rpmlintrc <built rpm>
+
+# rpmlint runs readelf on every ar archive to look for static libraries.  The
+# bundled LibreOffice frame-forwarding SDK ships archives for foreign platforms
+# only (prebuilds/win32-*/*.lib, prebuilds/darwin-*/*.a).  MSVC import
+# libraries use the Microsoft long-name table and Mach-O static libraries are
+# not ELF at all, so GNU readelf cannot parse either ("bad archive file name",
+# "Not an ELF file").  rpmlint then reports the failure as "readelf-failed".
+# The payload is the signed upstream content and must stay byte-identical, so
+# the files cannot be removed or rewritten; the finding is a tool limitation,
+# not a defect.  Linux prebuilds are deliberately not filtered: those must
+# still parse as ELF.
+addFilter(r"readelf-failed .*/prebuilds/(?!linux-)[^/]+/")
