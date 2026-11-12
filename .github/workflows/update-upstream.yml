@@ -97,8 +97,14 @@ jobs:
           pathlib.Path("/tmp/pr-title.txt").write_text(title, encoding="utf-8")
           PY
           title=$(cat /tmp/pr-title.txt)
-          if gh pr view automation/upstream-release --json number >/dev/null 2>&1; then
-            gh pr edit automation/upstream-release --title "$title" --body-file /tmp/pr-body.md
+          # Only an *open* PR may be updated in place.  `gh pr view <branch>`
+          # also resolves closed and merged pull requests for the same head, so
+          # without the state filter a closed PR would be edited forever and
+          # no new PR would ever be opened.
+          number=$(gh pr list --head automation/upstream-release --state open \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh pr edit "$number" --title "$title" --body-file /tmp/pr-body.md
           else
             gh pr create --base main --head automation/upstream-release \
               --title "$title" --body-file /tmp/pr-body.md
