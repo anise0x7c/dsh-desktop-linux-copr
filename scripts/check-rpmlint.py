@@ -48,7 +48,7 @@ def main(argv: list[str] | None = None) -> int:
         line = raw.strip()
         if not line or line.startswith("=====") or line.startswith("("):
             continue
-        if line.startswith(("rpmlint:", "configuration:", "checks:")):
+        if line.startswith(("rpmlint:", "rpmlintrc:", "configuration:", "checks:")):
             continue
         if line.startswith("/") and line.endswith(".toml"):
             continue

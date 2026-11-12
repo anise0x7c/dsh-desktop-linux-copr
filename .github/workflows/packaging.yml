@@ -108,7 +108,10 @@ jobs:
       - name: rpmlint (allowed findings are listed in the repository)
         run: |
           set -eu
-          rpmlint "$RPM_PATH" > /tmp/rpmlint.txt || true
+          # deepseek-harness.rpmlintrc holds file-scoped filters (tool
+          # limitations on bundled Windows prebuilts); package-wide allowed
+          # checks live in packaging/rpmlint-exceptions.txt.
+          rpmlint -r deepseek-harness.rpmlintrc "$RPM_PATH" > /tmp/rpmlint.txt || true
           python3 scripts/check-rpmlint.py /tmp/rpmlint.txt
 
       - name: Install, verify and remove

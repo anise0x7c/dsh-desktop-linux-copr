@@ -45,6 +45,13 @@ class CheckRpmlintTest(unittest.TestCase):
         result = self.run_checker(report, ["dir-or-file-in-opt", "binary-or-shlib-defines-rpath"])
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_rpmlintrc_header_is_ignored(self):
+        report = HEADER + "rpmlintrc: [PosixPath('deepseek-harness.rpmlintrc')]\n" + (
+            "deepseek-harness.x86_64: W: dir-or-file-in-opt /opt/DeepSeek Harness/x\n"
+        )
+        result = self.run_checker(report, ["dir-or-file-in-opt"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_unlisted_finding_fails(self):
         report = HEADER + "deepseek-harness.x86_64: E: missing-something /opt/DeepSeek Harness/x\n"
         result = self.run_checker(report, [])
