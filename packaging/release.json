@@ -2,15 +2,15 @@
   "schema": 1,
   "upstream": {
     "repository": "ffyfox/dsh-desktop-linux",
-    "tag": "v0.2.2rc2",
-    "commit": "ebae647713343cd328df7b1c5591633d42a35196",
-    "release_id": 442376840,
-    "published_at": "2026-11-12T01:24:04Z",
+    "tag": "v0.2.2rc3",
+    "commit": "8a7799f4da53d6f2434a9ba5b78abea30d11a3ae",
+    "release_id": 444277822,
+    "published_at": "2026-11-13T13:44:50Z",
     "header_license": "MIT"
   },
   "package": {
     "name": "deepseek-harness",
-    "version": "0.2.2~rc.2",
+    "version": "0.2.2~rc.3",
     "release": 2,
     "summary": "DeepSeek Harness desktop application",
     "license": "MIT AND BSD-2-Clause AND BSD-3-Clause AND Apache-2.0 AND ISC AND MPL-2.0 AND LGPL-2.1-or-later AND LGPL-3.0-or-later AND GPL-2.0-or-later AND IJG AND OpenSSL AND Python-2.0 AND PSF-2.0 AND MIT-CMU AND 0BSD AND BlueOak-1.0.0 AND Unlicense AND CC0-1.0 AND OFL-1.1 AND Unicode-3.0 AND (MPL-1.1 OR GPL-2.0-only OR LGPL-2.0-only)",
@@ -48,24 +48,24 @@
   },
   "assets": {
     "x86_64": {
-      "id": 737576369,
-      "name": "deepseek-harness-0.2.2-rc.2-linux-x86_64-unsigned.rpm",
-      "url": "https://github.com/ffyfox/dsh-desktop-linux/releases/download/v0.2.2rc2/deepseek-harness-0.2.2-rc.2-linux-x86_64-unsigned.rpm",
-      "size": 246928614,
-      "sha256": "03a269519eaa66c66b1d5a3514a6700134bf6c96b28258a06d7a50b7c420a148",
+      "id": 743809332,
+      "name": "deepseek-harness-0.2.2-rc.3-linux-x86_64-unsigned.rpm",
+      "url": "https://github.com/ffyfox/dsh-desktop-linux/releases/download/v0.2.2rc3/deepseek-harness-0.2.2-rc.3-linux-x86_64-unsigned.rpm",
+      "size": 246948410,
+      "sha256": "66ebb41c7c61d7401ff13659d3781984483d9ee5159d05c632b57d1a4036a504",
       "rpm_release": "1"
     },
     "aarch64": {
-      "id": 737575743,
-      "name": "deepseek-harness-0.2.2-rc.2-linux-aarch64-unsigned.rpm",
-      "url": "https://github.com/ffyfox/dsh-desktop-linux/releases/download/v0.2.2rc2/deepseek-harness-0.2.2-rc.2-linux-aarch64-unsigned.rpm",
-      "size": 232935321,
-      "sha256": "808a3c9ebd4ee6b95e7f1784c7f6b7e71d4db4818e930be02a91484882316a79",
+      "id": 743808326,
+      "name": "deepseek-harness-0.2.2-rc.3-linux-aarch64-unsigned.rpm",
+      "url": "https://github.com/ffyfox/dsh-desktop-linux/releases/download/v0.2.2rc3/deepseek-harness-0.2.2-rc.3-linux-aarch64-unsigned.rpm",
+      "size": 232983173,
+      "sha256": "99eed10b576512491512c69b0040e20a570ae08b4d513ddb8bc0fdf327295d0f",
       "rpm_release": "1"
     }
   },
   "audit": {
-    "audited_at": "2026-11-12",
+    "audited_at": "2026-11-13",
     "license_sources": [
       "RPM header of both upstream assets (MIT)",
       "resources/app/package.json and 654 bundled package.json license fields",
@@ -75,7 +75,7 @@
       "Fedora chromium.spec license expression used as the vetted base for the Chromium bundle"
     ],
     "notes": [
-      "License and Requires were carried over from v0.2.2rc1; re-audit the license expression and runtime dependencies before merging this automated update.",
+      "License and Requires were carried over from v0.2.2rc2; re-audit the license expression and runtime dependencies before merging this automated update.",
       "The package is an aggregate of many bundled works; the License field is the union of the audited components.",
       "The upstream RPM header only claims MIT, which is not sufficient for the bundled Chromium/Electron/runtime payload.",
       "Chromium's notice file also mentions Artistic and other one-off texts; the expression follows Fedora's chromium expression and the bundled package metadata."
